@@ -2,8 +2,9 @@
 #ifndef SIMOBJECTHEADERDEF
 #define SIMOBJECTHEADERDEF
 
-#include "Cell.hpp"
 class Cell;
+
+#include "Cell.hpp"
 
 class SimObject
 {
