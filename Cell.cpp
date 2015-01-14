@@ -9,9 +9,9 @@ Cell::Cell(double comLocation[3], double cellWidth, vector<SimObject>& simObject
 {
 	mCellWidth = cellWidth;
 	mComLocation = comLocation;
-	printf("%s %4.1f %4.1f %4.1f\n", "x y z: ", mComLocation[0], mComLocation[1], mComLocation[2]);
-	mExternalNode = false;
-	if(cellWidth < 1.0) mExternalNode = true;
+	//printf("%6.3f %6.3f %6.3f\n", mComLocation[0], mComLocation[1], mComLocation[2]);
+
+	mExternalNode = true;
 	mChildren.reserve(8);
 	for (int i = 0; i < 8; i++)
 	{
@@ -21,6 +21,21 @@ Cell::Cell(double comLocation[3], double cellWidth, vector<SimObject>& simObject
 	{
 	    CreateChildren(simObjectsXsort, simObjectsYsort, simObjectsZsort);
 	}
+}
+
+double Cell::getX() const
+{
+	return mComLocation[0];
+}
+
+double Cell::getY() const
+{
+	return mComLocation[1];
+}
+
+double Cell::getZ() const
+{
+	return mComLocation[2];
 }
 
 void Cell::CreateChildren(vector<SimObject>& simObjectsXsort,

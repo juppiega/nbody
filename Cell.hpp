@@ -25,9 +25,11 @@ private:
 											std::vector<SimObject>& simObjectsZsort) const;
 public:
 	double GetMass() const;
-	double* GetLocation() const;
 	double getWidth() const;
 	double IsExternal() const;
+	double getX() const;
+	double getY() const;
+	double getZ() const;
 	Cell(double comLocation[3], double cellWidth, std::vector<SimObject>& simObjectsXsort,
 		 std::vector<SimObject>& simObjectsYsort, std::vector<SimObject>& simObjectsZsort);
 	~Cell();

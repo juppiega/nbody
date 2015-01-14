@@ -15,6 +15,9 @@ private:
 public:
 	SimObject(double mass, double location[3], double velocity[3]);
 	void move(Cell& spaceGridRoot);
+	double getX() const;
+	double getY() const;
+	double getZ() const;
 };
 
 #endif
