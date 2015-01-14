@@ -20,6 +20,9 @@ private:
 	double ComputeMass(std::vector<SimObject>& objectsInCell) const;
 	bool IsExternal(std::vector<SimObject>& objectsInCell) const;
 
+	void FindObjInCorrectInterval(unsigned long& minInd,
+			unsigned long& maxInd, double (SimObject::*dimensionFunction)(void),
+			std::vector<SimObject>& simObjSorted) const;
 	std::vector<SimObject> FindObjThisCell(std::vector<SimObject>& simObjectsXsort,
 											std::vector<SimObject>& simObjectsYsort,
 											std::vector<SimObject>& simObjectsZsort) const;

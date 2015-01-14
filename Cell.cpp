@@ -4,8 +4,9 @@
 #include <cstddef>
 
 using namespace std;
-Cell::Cell(double comLocation[3], double cellWidth, vector<SimObject>& simObjectsXsort,
-		   vector<SimObject>& simObjectsYsort, vector<SimObject>& simObjectsZsort)
+Cell::Cell(double comLocation[3], double cellWidth,
+		vector<SimObject>& simObjectsXsort, vector<SimObject>& simObjectsYsort,
+		vector<SimObject>& simObjectsZsort)
 {
 	mCellWidth = cellWidth;
 	mComLocation = comLocation;
@@ -19,8 +20,59 @@ Cell::Cell(double comLocation[3], double cellWidth, vector<SimObject>& simObject
 	}
 	if (!mExternalNode)
 	{
-	    CreateChildren(simObjectsXsort, simObjectsYsort, simObjectsZsort);
+		CreateChildren(simObjectsXsort, simObjectsYsort, simObjectsZsort);
 	}
+}
+
+vector<SimObject> Cell::FindObjThisCell(vector<SimObject>& simObjectsXsort,
+		vector<SimObject>& simObjectsYsort,
+		vector<SimObject>& simObjectsZsort) const
+{
+	vector<SimObject> objectsInCell;
+	unsigned long westmostObj, eastmostObj;
+	unsigned long nortmostObj, southmostObj;
+	unsigned long uppermostObj, downmostObj;
+
+	FindObjInCorrectInterval(westmostObj, eastmostObj, &SimObject::getX, simObjectsXsort);
+}
+
+void Cell::FindObjInCorrectInterval(unsigned long& minInd,
+		unsigned long& maxInd, double (SimObject::*dimensionFunction)(),
+		vector<SimObject>& simObjSorted) const
+{
+	unsigned long ind = simObjSorted.size() / 2;
+	unsigned long indexChange = simObjSorted.size() / 4;
+	double minDim = mComLocation[0] - mCellWidth / 2.0;
+	do
+	{
+		if ((simObjSorted.at(ind).*dimensionFunction)() < minDim)
+		{
+			ind += indexChange;
+		}
+		else
+		{
+			ind -= indexChange;
+		}
+		indexChange /= 2;
+	} while (indexChange > 0);
+	minInd = ind;
+
+	ind = simObjSorted.size() / 2;
+	indexChange = simObjSorted.size() / 4;
+	double maxDim = mComLocation[0] + mCellWidth / 2.0;
+	do
+	{
+		if ((simObjSorted.at(ind).*dimensionFunction)() > maxDim)
+		{
+			ind -= indexChange;
+		}
+		else
+		{
+			ind += indexChange;
+		}
+		indexChange /= 2;
+	} while (indexChange > 0);
+	maxInd = ind;
 }
 
 double Cell::getX() const
@@ -39,8 +91,7 @@ double Cell::getZ() const
 }
 
 void Cell::CreateChildren(vector<SimObject>& simObjectsXsort,
-						  vector<SimObject>& simObjectsYsort,
-						  vector<SimObject>& simObjectsZsort)
+		vector<SimObject>& simObjectsYsort, vector<SimObject>& simObjectsZsort)
 {
 	double childCellWidth = mCellWidth / 2.0;
 	for (int i = 0; i < 8; i++)
@@ -74,8 +125,10 @@ void Cell::CreateChildren(vector<SimObject>& simObjectsXsort,
 			z = mComLocation[2] + childCellWidth / 2.0;
 		}
 
-		double childComLocation[3] = {x, y, z};
-		mChildren[i] = new Cell(childComLocation, childCellWidth, simObjectsXsort, simObjectsYsort, simObjectsZsort);
+		double childComLocation[3] =
+		{ x, y, z };
+		mChildren[i] = new Cell(childComLocation, childCellWidth,
+				simObjectsXsort, simObjectsYsort, simObjectsZsort);
 	}
 }
 

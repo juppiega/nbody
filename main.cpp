@@ -31,19 +31,13 @@ vector<SimObject> CreateSimObjects(int spaceWidth)
 	{
 		double x = -1 * spaceWidth / 2.0 + i * d;
 		double y = -1 * x;
-		double z = -1 * i * d;
+		double z = -1 * i * d * 0.5;
 		double location[3] =
 		{ x, y, z };
 		double velocity[3] =
 		{ 1, 1, 1 };
 		SimObject obj(1.0, location, velocity);
 		simObjects.push_back(obj);
-	}
-	for (vector<SimObject>::size_type i = 0; i < simObjects.size(); i++)
-	{
-		SimObject obj = simObjects.at(i);
-		printf("%6.3f %6.3f %6.3f\n", obj.getX(),
-				simObjects[i].getY(), simObjects[i].getZ());
 	}
 	return simObjects;
 }
@@ -85,8 +79,8 @@ Cell* CreateSpaceGrid(vector<SimObject>& simObjects, int spaceWidth)
 	sort(simObjectsZsort.begin(), simObjectsZsort.end(), lessThanZ());
 	for (unsigned long i = 0; i < simObjects.size(); i++)
 	{
-		printf("%6.3f %6.3f %6.3f\n", simObjects[i].getX(),
-				simObjects[i].getY(), simObjects[i].getZ());
+		SimObject obj = simObjectsZsort.at(i);
+		printf("%6.3f %6.3f %6.3f\n", obj.getX(), obj.getY(), obj.getZ());
 	}
 	Cell* spaceGridRoot = new Cell(origin, spaceWidth, simObjectsXsort,
 			simObjectsYsort, simObjectsZsort);

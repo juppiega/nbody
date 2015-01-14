@@ -1,13 +1,16 @@
 #include "SimObject.hpp"
 #include <vector>
+#include <algorithm>
 #include <stdio.h>
+#include <string.h>
+
+using namespace std;
 
 SimObject::SimObject(double mass, double location[3], double velocity[3])
 {
 	mMass = mass;
-	mLocation = location;
-	printf("%6.3f %6.3f %6.3f\n", mLocation[0], mLocation[1], mLocation[2]);
-	mVelocity = velocity;
+	memmove(mLocation, location, sizeof(mLocation));
+	memmove(mVelocity, velocity, sizeof(mVelocity));
 }
 
 double SimObject::getX() const
