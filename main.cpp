@@ -8,9 +8,7 @@ using namespace std;
 
 vector<SimObject> CreateSimObjects(int spaceWidth);
 Cell* CreateSpaceGrid(vector<SimObject>& simObjects, int spaceWidth);
-struct lessThanX;
-struct lessThanY;
-struct lessThanZ;
+struct lessThanPair;
 
 int main()
 {
@@ -29,8 +27,8 @@ vector<SimObject> CreateSimObjects(int spaceWidth)
 	double d = spaceWidth / (double) numObjects;
 	for (int i = 0; i < numObjects; i++)
 	{
-		double x = -1 * spaceWidth / 2.0 + i * d;
-		double y = -1 * x;
+		double x = (-1 * spaceWidth / 2.0 + i * d) * 0.5;
+		double y = -1 * x * 0.5;
 		double z = -1 * i * d * 0.5;
 		double location[3] =
 		{ x, y, z };
@@ -42,27 +40,11 @@ vector<SimObject> CreateSimObjects(int spaceWidth)
 	return simObjects;
 }
 
-struct lessThanX
+struct lessThanPair
 {
-	inline bool operator()(const SimObject& obj1, const SimObject& obj2)
+	inline bool operator()(const pair<double, unsigned long>& l, const pair<double, unsigned long>& r)
 	{
-		return (obj1.getX() < obj2.getX());
-	}
-};
-
-struct lessThanY
-{
-	inline bool operator()(const SimObject& obj1, const SimObject& obj2)
-	{
-		return (obj1.getY() < obj2.getY());
-	}
-};
-
-struct lessThanZ
-{
-	inline bool operator()(const SimObject& obj1, const SimObject& obj2)
-	{
-		return (obj1.getZ() < obj2.getZ());
+		return (l.first < r.first);
 	}
 };
 
@@ -70,20 +52,26 @@ Cell* CreateSpaceGrid(vector<SimObject>& simObjects, int spaceWidth)
 {
 	double origin[3] =
 	{ 0.0, 0.0, 0.0 };
-	vector<SimObject> simObjectsXsort = simObjects;
-	vector<SimObject> simObjectsYsort = simObjects;
-	vector<SimObject> simObjectsZsort = simObjects;
-
-	sort(simObjectsXsort.begin(), simObjectsXsort.end(), lessThanX());
-	sort(simObjectsYsort.begin(), simObjectsYsort.end(), lessThanY());
-	sort(simObjectsZsort.begin(), simObjectsZsort.end(), lessThanZ());
+	vector<pair<double, unsigned long> > sortX, sortY, sortZ;
+	unsigned long length = simObjects.size();
+	sortX.reserve(length);
+	sortY.reserve(length);
+	sortZ.reserve(length);
 	for (unsigned long i = 0; i < simObjects.size(); i++)
 	{
-		SimObject obj = simObjectsZsort.at(i);
-		printf("%6.3f %6.3f %6.3f\n", obj.getX(), obj.getY(), obj.getZ());
+		SimObject obj = simObjects.at(i);
+		sortX.push_back(make_pair(obj.getX(), i));
+		sortY.push_back(make_pair(obj.getY(), i));
+		sortZ.push_back(make_pair(obj.getZ(), i));
 	}
-	Cell* spaceGridRoot = new Cell(origin, spaceWidth, simObjectsXsort,
-			simObjectsYsort, simObjectsZsort);
+	sort(sortX.begin(), sortX.end(), lessThanPair());
+	sort(sortY.begin(), sortY.end(), lessThanPair());
+	sort(sortZ.begin(), sortZ.end(), lessThanPair());
+	for (unsigned long i = 0; i < simObjects.size(); i++)
+	{
+		printf("%6.3f\n", sortY.at(i).first);
+	}
+	Cell* spaceGridRoot = new Cell(origin, spaceWidth, sortX, sortY, sortZ, simObjects);
 	return spaceGridRoot;
 }
 

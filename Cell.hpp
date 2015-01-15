@@ -13,19 +13,22 @@ private:
 	double* mComLocation;
 	bool mExternalNode;
 	std::vector<Cell*> mChildren;
-	void CreateChildren(std::vector<SimObject>& simObjectsXsort,
-			  	  	    std::vector<SimObject>& simObjectsYsort,
-						std::vector<SimObject>& simObjectsZsort);
+	void CreateChildren(
+			std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
+			std::vector<std::pair<double, unsigned long> >& simObjectsYsort,
+			std::vector<std::pair<double, unsigned long> >& simObjectsZsort,
+			std::vector<SimObject>& simObjects);
 	void DeleteChildren(Cell* node);
 	double ComputeMass(std::vector<SimObject>& objectsInCell) const;
 	bool IsExternal(std::vector<SimObject>& objectsInCell) const;
 
-	void FindObjInCorrectInterval(unsigned long& minInd,
-			unsigned long& maxInd, double (SimObject::*dimensionFunction)()const,
-			std::vector<SimObject>& simObjSorted) const;
-	std::vector<SimObject> FindObjThisCell(std::vector<SimObject>& simObjectsXsort,
-											std::vector<SimObject>& simObjectsYsort,
-											std::vector<SimObject>& simObjectsZsort) const;
+	void FindObjInCorrectInterval(unsigned long& minInd, unsigned long& maxInd,
+			std::vector<std::pair<double, unsigned long> >& simObjectsSort) const;
+	std::vector<SimObject> FindObjThisCell(
+			std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
+			std::vector<std::pair<double, unsigned long> >& simObjectsYsort,
+			std::vector<std::pair<double, unsigned long> >& simObjectsZsort,
+			std::vector<SimObject>& simObjects) const;
 public:
 	double GetMass() const;
 	double getWidth() const;
@@ -33,8 +36,11 @@ public:
 	double getX() const;
 	double getY() const;
 	double getZ() const;
-	Cell(double comLocation[3], double cellWidth, std::vector<SimObject>& simObjectsXsort,
-		 std::vector<SimObject>& simObjectsYsort, std::vector<SimObject>& simObjectsZsort);
+	Cell(double comLocation[3], double cellWidth,
+			std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
+			std::vector<std::pair<double, unsigned long> >& simObjectsYsort,
+			std::vector<std::pair<double, unsigned long> >& simObjectsZsort,
+			std::vector<SimObject>& simObjects);
 	~Cell();
 };
 
