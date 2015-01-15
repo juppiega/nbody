@@ -11,7 +11,8 @@ Cell::Cell(double comLocation[3], double cellWidth,
 	mCellWidth = cellWidth;
 	mComLocation = comLocation;
 	//printf("%6.3f %6.3f %6.3f\n", mComLocation[0], mComLocation[1], mComLocation[2]);
-
+	vector<SimObject> objectsInThisCell = FindObjThisCell(simObjectsXsort,
+			simObjectsYsort, simObjectsZsort);
 	mExternalNode = true;
 	mChildren.reserve(8);
 	for (int i = 0; i < 8; i++)
@@ -30,49 +31,64 @@ vector<SimObject> Cell::FindObjThisCell(vector<SimObject>& simObjectsXsort,
 {
 	vector<SimObject> objectsInCell;
 	unsigned long westmostObj, eastmostObj;
-	unsigned long nortmostObj, southmostObj;
+	unsigned long northmostObj, southmostObj;
 	unsigned long uppermostObj, downmostObj;
 
-	FindObjInCorrectInterval(westmostObj, eastmostObj, &SimObject::getX, simObjectsXsort);
+	FindObjInCorrectInterval(westmostObj, eastmostObj, &SimObject::getX,
+			simObjectsXsort);
+	FindObjInCorrectInterval(southmostObj, northmostObj, &SimObject::getY,
+			simObjectsYsort);
+	FindObjInCorrectInterval(downmostObj, uppermostObj, &SimObject::getZ,
+			simObjectsZsort);
 }
 
 void Cell::FindObjInCorrectInterval(unsigned long& minInd,
-		unsigned long& maxInd, double (SimObject::*dimensionFunction)(),
+		unsigned long& maxInd, double (SimObject::*dimensionFunction)() const,
 		vector<SimObject>& simObjSorted) const
 {
-	unsigned long ind = simObjSorted.size() / 2;
-	unsigned long indexChange = simObjSorted.size() / 4;
-	double minDim = mComLocation[0] - mCellWidth / 2.0;
-	do
+	static int dim = 0; // x-dimension first.
+	unsigned long count = simObjSorted.size();
+	unsigned long ind;
+	unsigned long indexChange, first = 0;
+	double minDim = mComLocation[dim] - mCellWidth / 2.0;
+	while (count > 0)
 	{
+		ind = first;
+		indexChange = count / 2;
+		ind += indexChange;
 		if ((simObjSorted.at(ind).*dimensionFunction)() < minDim)
 		{
-			ind += indexChange;
+			ind++;
+			count -= indexChange + 1;
 		}
 		else
 		{
-			ind -= indexChange;
+			count = indexChange;
 		}
-		indexChange /= 2;
-	} while (indexChange > 0);
+	}
 	minInd = ind;
 
-	ind = simObjSorted.size() / 2;
-	indexChange = simObjSorted.size() / 4;
-	double maxDim = mComLocation[0] + mCellWidth / 2.0;
-	do
+	count = simObjSorted.size();
+	ind = 0;
+	double maxDim = mComLocation[dim] + mCellWidth / 2.0;
+	while (count > 0)
 	{
-		if ((simObjSorted.at(ind).*dimensionFunction)() > maxDim)
+		ind = first;
+		indexChange = count / 2;
+		ind += indexChange;
+		if ((simObjSorted.at(ind).*dimensionFunction)() >= maxDim)
 		{
-			ind -= indexChange;
+			ind++;
+			count -= indexChange + 1;
 		}
 		else
 		{
-			ind += indexChange;
+			count = indexChange;
 		}
-		indexChange /= 2;
-	} while (indexChange > 0);
+	}
 	maxInd = ind;
+	printf("%d\n", dim);
+	dim++;
 }
 
 double Cell::getX() const

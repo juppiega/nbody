@@ -21,7 +21,7 @@ private:
 	bool IsExternal(std::vector<SimObject>& objectsInCell) const;
 
 	void FindObjInCorrectInterval(unsigned long& minInd,
-			unsigned long& maxInd, double (SimObject::*dimensionFunction)(void),
+			unsigned long& maxInd, double (SimObject::*dimensionFunction)()const,
 			std::vector<SimObject>& simObjSorted) const;
 	std::vector<SimObject> FindObjThisCell(std::vector<SimObject>& simObjectsXsort,
 											std::vector<SimObject>& simObjectsYsort,
