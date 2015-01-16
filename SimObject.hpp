@@ -18,6 +18,7 @@ public:
 	double getX() const;
 	double getY() const;
 	double getZ() const;
+	double getMass() const;
 };
 
 #endif

@@ -1,6 +1,7 @@
 #include "Cell.hpp"
 #include <stdio.h>
 #include <vector>
+#include <algorithm>
 #include <cstddef>
 #include <climits>
 
@@ -13,10 +14,12 @@ Cell::Cell(double comLocation[3], double cellWidth,
 {
 	mCellWidth = cellWidth;
 	mComLocation = comLocation;
-	//printf("%6.3f %6.3f %6.3f\n", mComLocation[0], mComLocation[1], mComLocation[2]);
-	vector<SimObject> objectsInThisCell = FindObjThisCell(simObjectsXsort,
-			simObjectsYsort, simObjectsZsort, simObjects);
-	mExternalNode = true;
+	vector<unsigned long> objectsInThisCell = FindObjThisCell(simObjectsXsort,
+			simObjectsYsort, simObjectsZsort);
+
+	mExternalNode = IsExternal(objectsInThisCell);
+	mTotalMass = ComputeMass(objectsInThisCell, simObjects);
+
 	mChildren.reserve(8);
 	for (int i = 0; i < 8; i++)
 	{
@@ -29,22 +32,50 @@ Cell::Cell(double comLocation[3], double cellWidth,
 	}
 }
 
-vector<SimObject> Cell::FindObjThisCell(
+vector<unsigned long> Cell::FindObjThisCell(
 		std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
 		std::vector<std::pair<double, unsigned long> >& simObjectsYsort,
-		std::vector<std::pair<double, unsigned long> >& simObjectsZsort,
-		std::vector<SimObject>& simObjects) const
+		std::vector<std::pair<double, unsigned long> >& simObjectsZsort) const
 {
 	// Taman funktion nopeus on kyseenalainen; vertaa brute-forceen.
+	// Ei myöskaan tarvitse etsia koko avaruuden kappaleiden joukosta;
+	// ainoastaan parentin sisältä!
 	vector<SimObject> objectsInCell;
-	unsigned long westmostObj, eastmostObj;
-	unsigned long northmostObj, southmostObj;
-	unsigned long uppermostObj, downmostObj;
 
-	FindObjInCorrectInterval(westmostObj, eastmostObj, simObjectsXsort);
-	FindObjInCorrectInterval(southmostObj, northmostObj, simObjectsYsort);
-	FindObjInCorrectInterval(downmostObj, uppermostObj, simObjectsZsort);
+	vector<unsigned long> objWithCorrectX = FindObjInCorrectInterval(simObjectsXsort);
+	vector<unsigned long> objWithCorrectY = FindObjInCorrectInterval(simObjectsYsort);
+	vector<unsigned long> objWithCorrectZ = FindObjInCorrectInterval(simObjectsZsort);
+	vector<unsigned long> intersectXY, intersectXYZ;
 
+	if (objWithCorrectX.size() == 0 || objWithCorrectY.size() == 0 || objWithCorrectZ.size() == 0)
+	{
+		return intersectXYZ;
+	}
+
+	unsigned long intersectMaxSize = max(objWithCorrectX.size(), objWithCorrectY.size());
+	intersectXY.reserve(intersectMaxSize);
+	for (unsigned long i = 0; i < objWithCorrectY.size(); i++)
+	{
+		printf("%d\n", (int) objWithCorrectY.at(i));
+	}
+	vector<unsigned long>::iterator it = set_intersection(objWithCorrectX.begin(), objWithCorrectX.end(), objWithCorrectY.begin(), objWithCorrectY.end(), intersectXY.begin());
+
+	intersectXY.resize(it - intersectXY.begin());
+	for (unsigned long i = 0; i < intersectXY.size(); i++)
+	{
+		printf("%d\n", (int) intersectXY.at(i));
+	}
+	intersectXYZ.reserve(intersectXY.size());
+
+	it = set_intersection(intersectXY.begin(), intersectXY.end(), objWithCorrectZ.begin(), objWithCorrectZ.end(), intersectXYZ.begin());
+	intersectXYZ.resize(it - intersectXYZ.begin());
+
+	for (unsigned long i = 0; i < intersectXYZ.size(); i++)
+	{
+		printf("%d\n", (int) intersectXYZ.at(i));
+	}
+
+	return intersectXYZ;
 }
 
 vector<unsigned long> Cell::FindObjInCorrectInterval(vector<pair<double, unsigned long> >& simObjSorted) const
@@ -54,13 +85,14 @@ vector<unsigned long> Cell::FindObjInCorrectInterval(vector<pair<double, unsigne
 	unsigned long length = simObjSorted.size();
 	double minDim = mComLocation[dim] - mCellWidth / 2.0;
 	double maxDim = mComLocation[dim] + mCellWidth / 2.0;
+	vector<unsigned long> inRange;
 
 	if (simObjSorted.at(0).first > maxDim
 			|| simObjSorted.at(length - 1).first < minDim)
 	{
 		minInd = ULONG_MAX;
 		maxInd = ULONG_MAX;
-		return;
+		return inRange;
 	}
 
 	unsigned long ind = length / 2;
@@ -111,15 +143,17 @@ vector<unsigned long> Cell::FindObjInCorrectInterval(vector<pair<double, unsigne
 		}
 	}
 
-	vector<unsigned long> inRange;
 	inRange.reserve(maxInd - minInd + 1);
 	for (unsigned long i = minInd; i <= maxInd; i++)
 	{
-		inRange.at(i - minInd) = simObjSorted.at(i).second;
+		inRange.push_back(simObjSorted.at(i).second);
 	}
 
 	printf("%d\n", dim);
 	dim++;
+
+	sort(inRange.begin(), inRange.end());
+	return inRange;
 }
 
 double Cell::getX() const
@@ -135,6 +169,23 @@ double Cell::getY() const
 double Cell::getZ() const
 {
 	return mComLocation[2];
+}
+
+inline bool Cell::IsExternal(vector<unsigned long>& objectsInCell) const
+{
+	return objectsInCell.size() <= 1;
+}
+
+double Cell::ComputeMass(vector<unsigned long>& objectsInCell, vector<SimObject>& simObjects) const
+{
+	// Olisiko rekursio nopeampi? Miten objectsInCell.size():n kutsuminen joka loopilla vaikuttaa?
+
+	double mass = 0.0;
+	for (unsigned long i = 0; i < objectsInCell.size(); i++)
+	{
+		mass += simObjects.at(objectsInCell.at(i)).getMass();
+	}
+	return mass;
 }
 
 void Cell::CreateChildren(

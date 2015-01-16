@@ -27,3 +27,8 @@ double SimObject::getZ() const
 {
 	return mLocation[2];
 }
+
+double SimObject::getMass() const
+{
+	return mMass;
+}

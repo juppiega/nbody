@@ -19,16 +19,14 @@ private:
 			std::vector<std::pair<double, unsigned long> >& simObjectsZsort,
 			std::vector<SimObject>& simObjects);
 	void DeleteChildren(Cell* node);
-	double ComputeMass(std::vector<SimObject>& objectsInCell) const;
-	bool IsExternal(std::vector<SimObject>& objectsInCell) const;
+	double ComputeMass(std::vector<unsigned long>& objectsInCell, std::vector<SimObject>& simObjects) const;
+	bool IsExternal(std::vector<unsigned long>& objectsInCell) const;
 
-	void FindObjInCorrectInterval(unsigned long& minInd, unsigned long& maxInd,
-			std::vector<std::pair<double, unsigned long> >& simObjectsSort) const;
-	std::vector<SimObject> FindObjThisCell(
+	std::vector<unsigned long> FindObjInCorrectInterval(std::vector<std::pair<double, unsigned long> >& simObjSorted) const;
+	std::vector<unsigned long> FindObjThisCell(
 			std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
 			std::vector<std::pair<double, unsigned long> >& simObjectsYsort,
-			std::vector<std::pair<double, unsigned long> >& simObjectsZsort,
-			std::vector<SimObject>& simObjects) const;
+			std::vector<std::pair<double, unsigned long> >& simObjectsZsort) const;
 public:
 	double GetMass() const;
 	double getWidth() const;
