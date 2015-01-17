@@ -6,17 +6,14 @@
 #include <climits>
 
 using namespace std;
-Cell::Cell(double comLocation[3], double cellWidth,
-		std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
-		std::vector<std::pair<double, unsigned long> >& simObjectsYsort,
-		std::vector<std::pair<double, unsigned long> >& simObjectsZsort,
+Cell::Cell(double comLocation[3], double cellWidth, std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
+		std::vector<std::pair<double, unsigned long> >& simObjectsYsort, std::vector<std::pair<double, unsigned long> >& simObjectsZsort,
 		std::vector<SimObject>& simObjects)
 {
 	mCellWidth = cellWidth;
 	mComLocation = comLocation;
-	vector<unsigned long> objectsInThisCell = FindObjThisCell(simObjectsXsort,
-			simObjectsYsort, simObjectsZsort);
-
+	printf("%6.3f %6.3f %6.3f\n", mComLocation[0], mComLocation[1], mComLocation[2]);
+	vector<unsigned long> objectsInThisCell = FindObjThisCell(simObjectsXsort, simObjectsYsort, simObjectsZsort);
 	mExternalNode = IsExternal(objectsInThisCell);
 	mTotalMass = ComputeMass(objectsInThisCell, simObjects);
 
@@ -27,48 +24,33 @@ Cell::Cell(double comLocation[3], double cellWidth,
 	}
 	if (!mExternalNode)
 	{
-		CreateChildren(simObjectsXsort, simObjectsYsort, simObjectsZsort,
-				simObjects);
+		CreateChildren(simObjectsXsort, simObjectsYsort, simObjectsZsort, simObjects);
 	}
 }
 
-vector<unsigned long> Cell::FindObjThisCell(
-		std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
-		std::vector<std::pair<double, unsigned long> >& simObjectsYsort,
-		std::vector<std::pair<double, unsigned long> >& simObjectsZsort) const
+vector<unsigned long> Cell::FindObjThisCell(std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
+		std::vector<std::pair<double, unsigned long> >& simObjectsYsort, std::vector<std::pair<double, unsigned long> >& simObjectsZsort) const
 {
 	// Taman funktion nopeus on kyseenalainen; vertaa brute-forceen.
 	// Ei myöskaan tarvitse etsia koko avaruuden kappaleiden joukosta;
 	// ainoastaan parentin sisältä!
 	vector<SimObject> objectsInCell;
 
-	vector<unsigned long> objWithCorrectX = FindObjInCorrectInterval(simObjectsXsort);
-	vector<unsigned long> objWithCorrectY = FindObjInCorrectInterval(simObjectsYsort);
-	vector<unsigned long> objWithCorrectZ = FindObjInCorrectInterval(simObjectsZsort);
-	vector<unsigned long> intersectXY, intersectXYZ;
+	vector<unsigned long> objWithCorrectX = FindObjInCorrectInterval(simObjectsXsort, 0);
+	vector<unsigned long> objWithCorrectY = FindObjInCorrectInterval(simObjectsYsort, 1);
+	vector<unsigned long> objWithCorrectZ = FindObjInCorrectInterval(simObjectsZsort, 2);
+	vector<unsigned long> intersectXY;
+	vector<unsigned long> intersectXYZ;
+
+	intersectXYZ.reserve(0);
 
 	if (objWithCorrectX.size() == 0 || objWithCorrectY.size() == 0 || objWithCorrectZ.size() == 0)
 	{
 		return intersectXYZ;
 	}
 
-	unsigned long intersectMaxSize = max(objWithCorrectX.size(), objWithCorrectY.size());
-	intersectXY.reserve(intersectMaxSize);
-	for (unsigned long i = 0; i < objWithCorrectY.size(); i++)
-	{
-		printf("%d\n", (int) objWithCorrectY.at(i));
-	}
-	vector<unsigned long>::iterator it = set_intersection(objWithCorrectX.begin(), objWithCorrectX.end(), objWithCorrectY.begin(), objWithCorrectY.end(), intersectXY.begin());
-
-	intersectXY.resize(it - intersectXY.begin());
-	for (unsigned long i = 0; i < intersectXY.size(); i++)
-	{
-		printf("%d\n", (int) intersectXY.at(i));
-	}
-	intersectXYZ.reserve(intersectXY.size());
-
-	it = set_intersection(intersectXY.begin(), intersectXY.end(), objWithCorrectZ.begin(), objWithCorrectZ.end(), intersectXYZ.begin());
-	intersectXYZ.resize(it - intersectXYZ.begin());
+	intersectXY = Intersection(objWithCorrectX, objWithCorrectY);
+	intersectXYZ = Intersection(intersectXY, objWithCorrectZ);
 
 	for (unsigned long i = 0; i < intersectXYZ.size(); i++)
 	{
@@ -78,24 +60,53 @@ vector<unsigned long> Cell::FindObjThisCell(
 	return intersectXYZ;
 }
 
-vector<unsigned long> Cell::FindObjInCorrectInterval(vector<pair<double, unsigned long> >& simObjSorted) const
+vector<unsigned long> Cell::Intersection(const vector<unsigned long>& vec1, const vector<unsigned long>& vec2) const
 {
-	static int dim = 0; // x-dimension first.
+	vector<unsigned long> result;
+	result.reserve(min(vec1.size(), vec2.size()));
+	unsigned long first1 = 0, first2 = 0, last1 = vec1.size(), last2 = vec2.size();
+
+	while (first1 < last1 && first2 < last2)
+	{
+		unsigned long val1 = vec1.at(first1);
+		unsigned long val2 = vec2.at(first2);
+
+		if (val1 == val2)
+		{
+			result.push_back(val1);
+		}
+		if (val1 < val2)
+		{
+			first1++;
+		}
+		else
+		{
+			first2++;
+		}
+	}
+
+	vector<unsigned long> tmp(result);
+	result.swap(tmp);
+	return result;
+}
+
+vector<unsigned long> Cell::FindObjInCorrectInterval(vector<pair<double, unsigned long> >& simObjSorted, int dim) const
+{
 	unsigned long minInd, maxInd;
 	unsigned long length = simObjSorted.size();
 	double minDim = mComLocation[dim] - mCellWidth / 2.0;
 	double maxDim = mComLocation[dim] + mCellWidth / 2.0;
 	vector<unsigned long> inRange;
+	inRange.reserve(0);
 
-	if (simObjSorted.at(0).first > maxDim
-			|| simObjSorted.at(length - 1).first < minDim)
+	if (simObjSorted.at(0).first > maxDim || simObjSorted.at(length - 1).first < minDim)
 	{
 		minInd = ULONG_MAX;
 		maxInd = ULONG_MAX;
 		return inRange;
 	}
 
-	unsigned long ind = length / 2;
+	unsigned long ind = (length - 1) / 2;
 	unsigned long step = ind;
 	if (simObjSorted.at(0).first >= minDim)
 	{
@@ -106,20 +117,30 @@ vector<unsigned long> Cell::FindObjInCorrectInterval(vector<pair<double, unsigne
 		while (step > 1)
 		{
 			step = (step + 1) / 2;
+			if (ind > length - 1)
+			{
+				int a = 1;
+			}
 			if (simObjSorted.at(ind).first < minDim)
 			{
 				ind += step;
-				minInd = ind + 1;
 			}
 			else
 			{
 				ind -= step;
-				minInd = ind;
 			}
+		}
+		if (simObjSorted.at(ind).first < minDim)
+		{
+			minInd = ind + 1;
+		}
+		else
+		{
+			minInd = ind;
 		}
 	}
 
-	ind = length / 2;
+	ind = (length - 1) / 2;
 	step = ind;
 	if (simObjSorted.at(length - 1).first < maxDim)
 	{
@@ -133,13 +154,19 @@ vector<unsigned long> Cell::FindObjInCorrectInterval(vector<pair<double, unsigne
 			if (simObjSorted.at(ind).first < maxDim)
 			{
 				ind += step;
-				maxInd = ind;
 			}
 			else
 			{
 				ind -= step;
-				maxInd = ind - 1;
 			}
+		}
+		if (simObjSorted.at(ind).first < maxDim)
+		{
+			maxInd = ind;
+		}
+		else
+		{
+			maxInd = ind - 1;
 		}
 	}
 
@@ -148,9 +175,6 @@ vector<unsigned long> Cell::FindObjInCorrectInterval(vector<pair<double, unsigne
 	{
 		inRange.push_back(simObjSorted.at(i).second);
 	}
-
-	printf("%d\n", dim);
-	dim++;
 
 	sort(inRange.begin(), inRange.end());
 	return inRange;
@@ -188,10 +212,8 @@ double Cell::ComputeMass(vector<unsigned long>& objectsInCell, vector<SimObject>
 	return mass;
 }
 
-void Cell::CreateChildren(
-		std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
-		std::vector<std::pair<double, unsigned long> >& simObjectsYsort,
-		std::vector<std::pair<double, unsigned long> >& simObjectsZsort,
+void Cell::CreateChildren(std::vector<std::pair<double, unsigned long> >& simObjectsXsort,
+		std::vector<std::pair<double, unsigned long> >& simObjectsYsort, std::vector<std::pair<double, unsigned long> >& simObjectsZsort,
 		std::vector<SimObject>& simObjects)
 {
 	double childCellWidth = mCellWidth / 2.0;
@@ -226,10 +248,8 @@ void Cell::CreateChildren(
 			z = mComLocation[2] + childCellWidth / 2.0;
 		}
 
-		double childComLocation[3] =
-		{ x, y, z };
-		mChildren[i] = new Cell(childComLocation, childCellWidth,
-				simObjectsXsort, simObjectsYsort, simObjectsZsort, simObjects);
+		double childComLocation[3] = { x, y, z };
+		mChildren[i] = new Cell(childComLocation, childCellWidth, simObjectsXsort, simObjectsYsort, simObjectsZsort, simObjects);
 	}
 }
 

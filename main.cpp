@@ -21,13 +21,13 @@ int main()
 
 vector<SimObject> CreateSimObjects(int spaceWidth)
 {
-	int numObjects = 5;
+	int numObjects = 500;
 	vector<SimObject> simObjects;
 	simObjects.reserve(numObjects);
 	double d = spaceWidth / (double) numObjects;
 	for (int i = 0; i < numObjects; i++)
 	{
-		double x = (-1 * spaceWidth / 2.0 + i * d) * 0.5;
+		double x = (-1 * spaceWidth / 2.0 + i * d) + 1.0;
 		double y = -1 * x * 0.5;
 		double z = -1 * i * d * 0.5;
 		double location[3] =
@@ -69,8 +69,10 @@ Cell* CreateSpaceGrid(vector<SimObject>& simObjects, int spaceWidth)
 	sort(sortZ.begin(), sortZ.end(), lessThanPair());
 	for (unsigned long i = 0; i < simObjects.size(); i++)
 	{
-		printf("%6.3f\n", sortY.at(i).first);
+		SimObject obj = simObjects.at(i);
+		printf("%ld. %6.3f %6.3f %6.3f\n", i, obj.getX(), obj.getY(), obj.getZ());
 	}
+	printf("\n");
 	Cell* spaceGridRoot = new Cell(origin, spaceWidth, sortX, sortY, sortZ, simObjects);
 	return spaceGridRoot;
 }
